@@ -1,0 +1,282 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>My'Kick</title>
+    <link rel="stylesheet" href="popup.css" />
+  </head>
+  <body>
+    <header class="head">
+      <div class="brand">
+        <img class="logo" src="../../icons/icon48.png" alt="" />
+        <span class="title">My'<b>Kick</b></span>
+      </div>
+      <span class="version" id="version"></span>
+    </header>
+
+    <main class="features">
+      <h2 class="group-name">Player</h2>
+      <label class="feature" for="qualityLock">
+        <div class="feature-text">
+          <span class="feature-name">Lock stream quality</span>
+          <span class="feature-desc">Highest available quality, never Auto</span>
+        </div>
+        <span class="switch">
+          <input type="checkbox" id="qualityLock" data-setting="qualityLock" />
+          <span class="slider"></span>
+        </span>
+      </label>
+      <label
+        class="feature"
+        for="fastStreamSwitch"
+        title="Cuts out the hidden delay Kick adds before a new stream starts, so switching channels feels instant. Turning it on reloads the Kick tab."
+      >
+        <div class="feature-text">
+          <span class="feature-name"><span class="badge-premium">Premium</span>Turbo switching</span>
+          <span class="feature-desc">Streams start instantly on switch</span>
+        </div>
+        <span class="switch">
+          <input type="checkbox" id="fastStreamSwitch" data-setting="fastStreamSwitch" data-reload-on-enable />
+          <span class="slider"></span>
+        </span>
+      </label>
+      <div
+        class="feature action"
+        title="Copies a direct .m3u8 link for the live stream, VOD or clip in this tab. In VLC: Media › Open Network Stream (Ctrl+N), paste, Play. Also works in mpv."
+      >
+        <div class="feature-text">
+          <span class="feature-name">Copy link for VLC</span>
+          <span class="feature-desc" id="vlcDesc">Play this stream or VOD in VLC</span>
+        </div>
+        <button type="button" class="action-btn" id="vlcBtn">Copy</button>
+      </div>
+      <input class="vlc-url" id="vlcUrl" type="text" readonly hidden spellcheck="false" />
+
+      <h2 class="group-name">Sidebar</h2>
+      <div class="feature-group">
+        <label class="feature" for="expandFollowing">
+          <div class="feature-text">
+            <span class="feature-name">Expand Following</span>
+            <span class="feature-desc">Show the full list without "Show More"</span>
+          </div>
+          <span class="switch">
+            <input type="checkbox" id="expandFollowing" data-setting="expandFollowing" />
+            <span class="slider"></span>
+          </span>
+        </label>
+        <label class="feature sub" for="hideOfflineFollowing">
+          <div class="feature-text">
+            <span class="feature-name">Hide offline channels</span>
+            <span class="feature-desc">Only show channels that are live</span>
+          </div>
+          <span class="switch">
+            <input
+              type="checkbox"
+              id="hideOfflineFollowing"
+              data-setting="hideOfflineFollowing"
+              data-requires="expandFollowing"
+            />
+            <span class="slider"></span>
+          </span>
+        </label>
+      </div>
+
+      <h2 class="group-name">Chat</h2>
+      <label class="feature" for="autoAcceptChatRules">
+        <div class="feature-text">
+          <span class="feature-name">Auto-accept chat rules</span>
+          <span class="feature-desc">Skip the "I agree" box on every channel</span>
+        </div>
+        <span class="switch">
+          <input type="checkbox" id="autoAcceptChatRules" data-setting="autoAcceptChatRules" />
+          <span class="slider"></span>
+        </span>
+      </label>
+      <label
+        class="feature"
+        for="keepDeletedMessages"
+        title="Deleted messages stay in chat, dimmed on a faint red background, with the AI Mod tag and reason when there is one. Messages from banned or timed-out users stay too, tagged (Banned) / (Timed out)."
+      >
+        <div class="feature-text">
+          <span class="feature-name">Keep deleted messages</span>
+          <span class="feature-desc">Show them dimmed instead of removed</span>
+        </div>
+        <span class="switch">
+          <input type="checkbox" id="keepDeletedMessages" data-setting="keepDeletedMessages" />
+          <span class="slider"></span>
+        </span>
+      </label>
+      <label
+        class="feature sub"
+        for="showBanNotices"
+        title="Lines like &quot;machinespiritbot timed out mattyy25 for 30 minutes&quot;. The user's messages stay visible either way."
+      >
+        <div class="feature-text">
+          <span class="feature-name">Show ban notices</span>
+          <span class="feature-desc">X timed out Y for 30 minutes</span>
+        </div>
+        <span class="switch">
+          <input
+            type="checkbox"
+            id="showBanNotices"
+            data-setting="showBanNotices"
+            data-requires="keepDeletedMessages"
+          />
+          <span class="slider"></span>
+        </span>
+      </label>
+
+      <h2 class="group-name">Streamers</h2>
+      <div class="feature-group">
+        <label class="feature" for="blockStreamers">
+          <div class="feature-text">
+            <span class="feature-name">Block streamers</span>
+            <span class="feature-desc">Hides their streams on Browse</span>
+          </div>
+          <span class="switch">
+            <input type="checkbox" id="blockStreamers" data-setting="blockStreamers" />
+            <span class="slider"></span>
+          </span>
+        </label>
+        <label class="feature sub" for="showStreamerBlockButtons">
+          <div class="feature-text">
+            <span class="feature-name">Show block buttons</span>
+            <span class="feature-desc">One-click &times; on each stream</span>
+          </div>
+          <span class="switch">
+            <input
+              type="checkbox"
+              id="showStreamerBlockButtons"
+              data-setting="showStreamerBlockButtons"
+              data-requires="blockStreamers"
+            />
+            <span class="slider"></span>
+          </span>
+        </label>
+        <div class="block-editor" data-list="blockedStreamers">
+          <form class="block-add" autocomplete="off">
+            <input type="text" placeholder="Streamer name" maxlength="80" spellcheck="false" />
+            <button type="submit">Add</button>
+          </form>
+          <ul class="chips"></ul>
+          <p class="empty">No blocked streamers yet</p>
+        </div>
+      </div>
+
+      <h2 class="group-name">Categories</h2>
+      <div class="feature-group">
+        <label class="feature" for="blockCategories">
+          <div class="feature-text">
+            <span class="feature-name">Block categories</span>
+            <span class="feature-desc">Hides them and their streams</span>
+          </div>
+          <span class="switch">
+            <input type="checkbox" id="blockCategories" data-setting="blockCategories" />
+            <span class="slider"></span>
+          </span>
+        </label>
+        <label class="feature sub" for="showBlockButtons">
+          <div class="feature-text">
+            <span class="feature-name">Show block buttons</span>
+            <span class="feature-desc">One-click &times; on each card</span>
+          </div>
+          <span class="switch">
+            <input
+              type="checkbox"
+              id="showBlockButtons"
+              data-setting="showBlockButtons"
+              data-requires="blockCategories"
+            />
+            <span class="slider"></span>
+          </span>
+        </label>
+        <label
+          class="feature sub"
+          for="keepFollowedInBlockedCategories"
+          title="On Browse › Livestreams, a live streamer you follow is not hidden just because their current category is blocked. Streamers you blocked by name stay hidden. Same setting as under Titles."
+        >
+          <div class="feature-text">
+            <span class="feature-name">Keep followed streamers</span>
+            <span class="feature-desc">Channels you follow stay visible even when live in a blocked category</span>
+          </div>
+          <span class="switch">
+            <input
+              type="checkbox"
+              id="keepFollowedInBlockedCategories"
+              data-setting="keepFollowedInBlockedCategories"
+              data-requires="blockCategories"
+            />
+            <span class="slider"></span>
+          </span>
+        </label>
+        <div class="block-editor" data-list="blockedCategories">
+          <form class="block-add" autocomplete="off">
+            <input type="text" placeholder="Category name, e.g. Minecraft" maxlength="80" spellcheck="false" />
+            <button type="submit">Add</button>
+          </form>
+          <ul class="chips"></ul>
+          <p class="empty">No blocked categories yet</p>
+        </div>
+      </div>
+
+      <h2 class="group-name">Titles</h2>
+      <div class="feature-group">
+        <label
+          class="feature"
+          for="blockTitles"
+          title="On Browse › Livestreams, streams whose title contains one of these words are hidden. Upper/lower case and accents don't matter (KUMAR = kumar, çıkış = CIKIS). Followed channels stay visible while &quot;Keep followed streamers&quot; is on."
+        >
+          <div class="feature-text">
+            <span class="feature-name">Hide by title</span>
+            <span class="feature-desc">Hides streams whose title contains a word</span>
+          </div>
+          <span class="switch">
+            <input type="checkbox" id="blockTitles" data-setting="blockTitles" />
+            <span class="slider"></span>
+          </span>
+        </label>
+        <label
+          class="feature sub"
+          for="keepFollowedInBlockedTitles"
+          title="On Browse › Livestreams, a live streamer you follow is not hidden just because their title has a blocked word. Streamers you blocked by name stay hidden. Same setting as under Categories."
+        >
+          <div class="feature-text">
+            <span class="feature-name">Keep followed streamers</span>
+            <span class="feature-desc">Channels you follow stay visible even with a blocked title word</span>
+          </div>
+          <span class="switch">
+            <input
+              type="checkbox"
+              id="keepFollowedInBlockedTitles"
+              data-setting="keepFollowedInBlockedCategories"
+              data-requires="blockTitles"
+            />
+            <span class="slider"></span>
+          </span>
+        </label>
+        <div class="block-editor" data-list="blockedTitleWords">
+          <form class="block-add" autocomplete="off">
+            <input type="text" placeholder="Word or phrase, e.g. slot" maxlength="80" spellcheck="false" />
+            <button type="submit">Add</button>
+          </form>
+          <ul class="chips"></ul>
+          <p class="empty">No blocked title words yet</p>
+        </div>
+      </div>
+    </main>
+
+    <div class="backup">
+      <span class="backup-label">Settings</span>
+      <button type="button" class="backup-btn" id="exportBtn" title="Save all settings to a file">Export</button>
+      <button type="button" class="backup-btn" id="importBtn" title="Restore settings from a file">Import</button>
+    </div>
+
+    <footer class="status" id="status">
+      <span class="dot" id="statusDot"></span>
+      <span class="status-text" id="statusText">Checking…</span>
+    </footer>
+
+    <script src="../shared/settings.js"></script>
+    <script src="popup.js"></script>
+  </body>
+</html>

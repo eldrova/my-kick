@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>My'Kick · Backup</title>
+    <link rel="stylesheet" href="options.css" />
+  </head>
+  <body>
+    <main class="page">
+      <header class="head">
+        <img class="logo" src="../../icons/icon48.png" alt="" />
+        <h1 class="title">My'<b>Kick</b></h1>
+        <span class="version" id="version"></span>
+      </header>
+
+      <section class="card">
+        <h2>Backup &amp; restore</h2>
+        <p class="lead">
+          Save every My'Kick setting to a file: all toggles and your blocked categories and streamers.
+          Import it later, even after reinstalling the extension, to get everything back.
+        </p>
+
+        <div class="actions">
+          <button type="button" class="btn primary" id="exportBtn">Export settings</button>
+          <button type="button" class="btn" id="importBtn">Import settings</button>
+          <input type="file" id="importFile" accept="application/json,.json" hidden />
+        </div>
+
+        <div class="message" id="message" role="status" hidden></div>
+      </section>
+
+      <section class="card summary">
+        <h2>Current settings</h2>
+        <dl class="stats">
+          <div><dt>Features on</dt><dd id="statOn">–</dd></div>
+          <div><dt>Blocked categories</dt><dd id="statCategories">–</dd></div>
+          <div><dt>Blocked streamers</dt><dd id="statStreamers">–</dd></div>
+          <div><dt>Blocked title words</dt><dd id="statTitleWords">–</dd></div>
+        </dl>
+      </section>
+    </main>
+
+    <script src="../shared/settings.js"></script>
+    <script src="options.js"></script>
+  </body>
+</html>
