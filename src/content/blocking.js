@@ -1,8 +1,9 @@
 // Block lists on the Browse pages.
 //
 // Browse > Categories (/browse/categories)
-//   Card: div[data-testid="category-card-root"], name in
-//   span[data-testid="category-<Name>"], cover link a[href="/category/<slug>"].
+//   Card: div[data-testid="category-card-root"], name in an element (currently
+//   <h3>, previously <span>) with data-testid="category-<Name>", cover link
+//   a[href="/category/<slug>"].
 //   Tag chips (/browse?tags=...) are ignored: only the card's own category counts.
 //
 // Browse > Livestreams (/browse)
@@ -45,7 +46,17 @@
     path: /^\/browse\/categories\/?$/,
     card: 'div[data-testid="category-card-root"]',
     cover: 'a[href^="/category/"]',
-    name: (card) => text(card.querySelector('span[data-testid^="category-"]')),
+    // The name carries data-testid="category-<Name>"; Kick has used both <h3>
+    // and <span> for the element, so match by the testid, not the tag. The
+    // testid suffix IS the exact category name, so read it from the attribute
+    // (immune to inner markup / truncation) and fall back to the text. Exclude
+    // the card root, whose testid ("category-card-root") also starts "category-".
+    name(card) {
+      const el = card.querySelector('[data-testid^="category-"]:not([data-testid="category-card-root"])');
+      if (!el) return "";
+      const fromId = (el.getAttribute("data-testid") || "").slice("category-".length).trim();
+      return fromId || text(el);
+    },
     keys(card) {
       return keysOf(this.name(card), categorySlug(card.querySelector(this.cover)));
     },
@@ -126,11 +137,21 @@
   `;
   (document.head || document.documentElement).appendChild(style);
 
-  const addToList = async (listKey, name) => {
+  // Writes are serialized through this chain: two quick clicks would otherwise
+  // both read the old list and the second would overwrite the first, dropping
+  // an entry. The .catch keeps the chain alive (and swallows the rejection) if
+  // a write fails, e.g. "Extension context invalidated" after a reload.
+  let writeQueue = Promise.resolve();
+  const addToList = (listKey, name) => {
     const key = ktNormalize(name);
-    if (!key) return;
-    const list = (await ktGetSettings())[listKey] || [];
-    if (!list.some((n) => ktNormalize(n) === key)) await ktSetSetting(listKey, [...list, name]);
+    if (!key) return writeQueue;
+    writeQueue = writeQueue
+      .then(async () => {
+        const list = (await ktGetSettings())[listKey] || [];
+        if (!list.some((n) => ktNormalize(n) === key)) await ktSetSetting(listKey, [...list, name]);
+      })
+      .catch(() => {});
+    return writeQueue;
   };
 
   const makeButton = (kind, card) => {

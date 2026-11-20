@@ -28,6 +28,20 @@
       </label>
       <label
         class="feature"
+        for="keepQualityInBackground"
+        title="Kick lowers the stream quality once its tab has been in the background (another tab, or the window minimized) for 60 seconds, until you come back. This keeps the quality you were watching."
+      >
+        <div class="feature-text">
+          <span class="feature-name">Keep quality in background</span>
+          <span class="feature-desc">No quality drop in background tabs</span>
+        </div>
+        <span class="switch">
+          <input type="checkbox" id="keepQualityInBackground" data-setting="keepQualityInBackground" />
+          <span class="slider"></span>
+        </span>
+      </label>
+      <label
+        class="feature"
         for="fastStreamSwitch"
         title="Cuts out the hidden delay Kick adds before a new stream starts, so switching channels feels instant. Turning it on reloads the Kick tab."
       >
@@ -37,6 +51,20 @@
         </div>
         <span class="switch">
           <input type="checkbox" id="fastStreamSwitch" data-setting="fastStreamSwitch" data-reload-on-enable />
+          <span class="slider"></span>
+        </span>
+      </label>
+      <label
+        class="feature"
+        for="unlockSubVideos"
+        title="On a subscriber-only VOD, replaces Kick's lock with a player that streams the video. Works only while this toggle is on. Resolves the public stream from Kick's own video list; no subscription is used."
+      >
+        <div class="feature-text">
+          <span class="feature-name"><span class="badge-premium">Premium</span>Unlock Sub-Only</span>
+          <span class="feature-desc">Watch subscriber-only VODs while on</span>
+        </div>
+        <span class="switch">
+          <input type="checkbox" id="unlockSubVideos" data-setting="unlockSubVideos" />
           <span class="slider"></span>
         </span>
       </label>

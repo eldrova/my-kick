@@ -70,6 +70,19 @@
   };
 
   const vod = async (id, slug) => {
+    // "Unlock Sub-Only Videos" on: resolve the public master the same way the
+    // in-page player does. This is the only path that reaches a subscriber-only
+    // VOD, and it also hands back a permanent link for ordinary VODs.
+    try {
+      const { unlockSubVideos } = await ktGetSettings();
+      if (unlockSubVideos && typeof window.ktResolveSubVodMaster === "function") {
+        const r = await window.ktResolveSubVodMaster(slug, id);
+        if (r?.url) {
+          return { link: { kind: "VOD", channel: r.channel || slug, title: r.title || "", url: r.url } };
+        }
+      }
+    } catch {}
+
     // Older VODs (UUID ids) still have a permanent `source` on the legacy API.
     try {
       const v = await api(`/api/v1/video/${encodeURIComponent(id)}`);

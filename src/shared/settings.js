@@ -1,13 +1,18 @@
 // Shared by the content scripts, the popup and the options page. Add new
-// feature flags here. These are also the defaults of a fresh install.
+// feature flags here. These are also the defaults of a fresh install. On a
+// fresh install the Player toggles (quality lock, keep quality in background,
+// turbo switching, unlock sub-only) and the Following ones stay off; the chat
+// and block toggles are on.
 const KT_DEFAULT_SETTINGS = {
   qualityLock: false,
+  keepQualityInBackground: false, // stop Kick's quality drop after 60 s in a hidden tab
   fastStreamSwitch: false,
+  unlockSubVideos: false, // replace the subscriber-only lock on VODs with an HLS player
   expandFollowing: false,
   hideOfflineFollowing: false, // only applies while expandFollowing is on
-  autoAcceptChatRules: false,
-  keepDeletedMessages: false,
-  showBanNotices: false, // "<mod> timed out <user> for 30 minutes" lines, only with keepDeletedMessages
+  autoAcceptChatRules: true,
+  keepDeletedMessages: true,
+  showBanNotices: true, // "<mod> timed out <user> for 30 minutes" lines, only with keepDeletedMessages
   blockCategories: true,
   blockedCategories: [], // names as the user typed them
   showBlockButtons: true, // × on each category card, only while blockCategories is on

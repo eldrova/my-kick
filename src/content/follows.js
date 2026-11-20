@@ -64,12 +64,19 @@ const ktFollows = (() => {
       .then((list) => {
         channels = list;
         loadedAt = Date.now();
-        chrome.storage.local.set({ [STORAGE_KEY]: { at: loadedAt, channels: list } }).catch(() => {});
+        // Throws synchronously (not a rejected promise) once the extension
+        // context is gone, so guard it separately from the fetch.
+        try {
+          chrome.storage.local.set({ [STORAGE_KEY]: { at: loadedAt, channels: list } }).catch(() => {});
+        } catch {}
         for (const fn of listeners) fn(list);
         return list;
       })
       .catch((e) => {
-        console.warn("[My'Kick] could not load the follow list", e);
+        // After the extension is reloaded or updated, scripts left running in
+        // open tabs lose chrome.* access ("Extension context invalidated").
+        // Nothing is wrong; the tab's next load runs the new copy.
+        if (chrome.runtime?.id) console.warn("[My'Kick] could not load the follow list", e);
         // Keep what we had and wait MAX_AGE_MS before trying again.
         channels ||= [];
         loadedAt = Date.now();

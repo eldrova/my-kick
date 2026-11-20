@@ -1,6 +1,6 @@
 # How it works
 
-Technical notes on Filtered Kick (My'Kick).
+Technical notes on My'Kick.
 
 ## Lock stream quality
 Kick uses the Amazon IVS player:
@@ -70,11 +70,29 @@ Other follow-related endpoints: `/api/v2/channels/followed` (same list, 5 per pa
 
 The block button is added inside the card's cover link. Its click handler calls `preventDefault()` and `stopPropagation()` so the click neither follows the link nor reaches Kick's React handlers, then adds the card's category or streamer name to `blockedCategories` / `blockedStreamers`.
 
+## Keep quality in background (`keepQualityInBackground`)
+Kick creates its Amazon IVS player with `optimizeBackgroundPlayback: { enabled: true, switchDelayMs: 60000 }` (the SDK default is `enabled: false`). When the tab is hidden the player posts `{ funcName: "setVisible", args: [false] }` to its video worker, and the worker drops to a low rendition 60 s later, until the tab is visible again (`setVisible(true)`).
+
+`src/inject/background-quality.js` (MAIN world) wraps `Worker.prototype.postMessage`. While the setting is on it rewrites `setVisible(false)` to `setVisible(true)`, so the worker never learns the tab went to the background and keeps the quality. Toggling the setting re-sends the correct state to every player worker, so it works without a reload. No other message is touched.
+
+## Unlock Sub-Only Videos (`unlockSubVideos`)
+A subscriber-only VOD shows a lock (`[data-testid="video-subscriber-only"]`) and the API returns no playable `source`. The public HLS master still exists at a fixed, unauthenticated location derived from the recording's IVS ids and its start time, so no subscription token is involved.
+
+`src/content/sub-resolve.js` (isolated world) resolves it, and is shared with the VLC-link copier:
+- The page id in `/<channel>/videos/<id>` is a UUIDv7, and its first 48 bits are the stream's start time in ms. That id is not in the videos list and `/api/v1/video/<id>` returns 404 for it, so the start time is decoded from the id and matched against `GET /api/v2/channels/<slug>/videos` by the minute. The matched entry carries `channel_id`, `start_time` and a `thumbnail` whose path still embeds `<channelIvsId>/<videoId>`.
+- The master is built as `https://stream.kick.com[/<edge>]/ivs/v1/196233775518/<channelIvsId>/<Y>/<M>/<D>/<h>/<min>/<videoId>/media/hls/master.m3u8` (date parts are not zero-padded). A few minute offsets and edge prefixes are probed until one returns 200, and the result is cached per video.
+
+`src/content/sub-unlock.js` (isolated world, `document_idle`, top frame) watches for the lock with a MutationObserver that runs only while the setting is on and only on VOD routes. On a locked VOD it dynamically imports `src/vendor/hls.min.mjs` (declared in `web_accessible_resources`), so the ~430 KB library loads only when a VOD is actually unlocked, not on every Kick page. It overlays a `<video>` on the player's clipping viewport at `z-index: 250` (above Kick's lock layer at 101, below its navbar at 301), locks hls.js to the highest rendition, caps `backBufferLength` to 60 s, and shows a brief "unlocked by My'Kick" badge. Only one player exists at a time: a new mount, an SPA navigation, the setting turning off, or React removing the node all tear it down and call `hls.destroy()`.
+
+## Sub-only chat replay
+`src/content/sub-chat.js` fills Kick's own chat column (`#chatroom-messages`, which the sub-only page renders empty because the video is locked) with the channel's chat history, played back in sync with the video, the same way a normal VOD chat does. Messages come from `GET web.kick.com/api/v1/chat/<channel_id>/history?start_time=<ISO>` and its `?cursor=<c>` window, where `<channel_id>` is the videos-list entry's `channel_id`; each carries `sender.username`, `sender.identity.color`, `badges_v2[].image_url` and a content string with `[emote:<id>:<name>]` tags. A message is shown when its `created_at` reaches `stream start + video.currentTime`; seeking clears and re-fetches for the new position. It holds the last 500 messages in memory and 120 rows in the DOM (old rows are removed as new ones arrive), queries at the advancing playhead so it never gets stuck, pulls only while the video is playing, and backs off when the chat is quiet. Message text is built with `textContent` only, so chat can't inject HTML.
+
 ## Project layout
 
 ```
 manifest.json
 src/inject/quality-lock.js   MAIN world, IVS player hook
+src/inject/background-quality.js  MAIN world, keeps stream quality in background tabs
 src/inject/following-expand.js  MAIN world, loads the whole Following list at once
 src/inject/chat-rules.js     MAIN world, auto-accepts chat rules
 src/inject/chat-deleted.js   MAIN world, keeps deleted chat messages visible
@@ -85,6 +103,10 @@ src/content/following.js     hides the Show More/Less bar and offline rows
 src/content/follows.js       loads and caches the user's full follow list
 src/content/blocking.js      category / streamer block lists on the Browse pages
 src/content/vlc-link.js      resolves the tab's stream / VOD / clip to an .m3u8 link for VLC
+src/content/sub-resolve.js   resolves a subscriber-only VOD to its public .m3u8 master
+src/content/sub-unlock.js    replaces the sub-only lock with an hls.js player
+src/content/sub-chat.js      replays the VOD's chat in sync, in Kick's chat column
+src/vendor/hls.min.mjs       bundled hls.js, imported only when a VOD is unlocked
 src/shared/settings.js       default settings (add new feature flags here), name/title matching, backup helpers
 src/popup/                   popup UI
 src/options/                 options page: backup & restore
@@ -97,5 +119,5 @@ Every feature applies live when switched on, except ones that can only work from
 ## Backup file format
 
 ```json
-{ "app": "kick-tools", "version": "1.1.2", "exportedAt": "…", "settings": { "qualityLock": false, "blockedCategories": ["Minecraft"], "…": "…" } }
+{ "app": "kick-tools", "version": "1.2.0", "exportedAt": "…", "settings": { "qualityLock": false, "blockedCategories": ["Minecraft"], "…": "…" } }
 ```
